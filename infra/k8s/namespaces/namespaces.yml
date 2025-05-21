@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hawktrace-ingestion
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hawktrace-storage
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hawktrace-monitoring
