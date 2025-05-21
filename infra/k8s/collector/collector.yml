@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector
+  namespace: hawktrace-ingestion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: collector
+  template:
+    metadata:
+      labels:
+        app: collector
+    spec:
+      containers:
+        - name: collector
+          image: ghcr.io/yourgithubusername/hawktrace-collector:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka.hawktrace-storage:9092"
+            - name: HAWKTRACE_KAFKA_TOPIC_LOGS
+              value: "hawktrace.logs"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log
+              readOnly: true
+      volumes:
+        - name: log-volume
+          hostPath:
+            path: /var/log
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: collector
+  namespace: hawktrace-ingestion
+spec:
+  selector:
+    app: collector
+  ports:
+    - port: 8081
+      targetPort: 8081
