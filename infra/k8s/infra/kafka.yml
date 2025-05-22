@@ -59,6 +59,10 @@ spec:
       containers:
         - name: kafka
           image: confluentinc/cp-kafka:7.3.0
+          command:
+            - bash
+            - -c
+            - unset KAFKA_PORT; /etc/confluent/docker/run
           ports:
             - containerPort: 9092
           env:
@@ -66,8 +70,10 @@ spec:
               value: "1"
             - name: KAFKA_ZOOKEEPER_CONNECT
               value: "zookeeper:2181"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:9092"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://kafka:9092"
+              value: "PLAINTEXT://kafka-service:9092"
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "1"
           resources:
@@ -81,7 +87,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka
+  name: kafka-service
   namespace: hawktrace-storage
 spec:
   selector:
@@ -114,7 +120,7 @@ spec:
             - name: KAFKA_CLUSTERS_0_NAME
               value: "local"
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-              value: "kafka:9092"
+              value: "kafka-service:9092"
           resources:
             requests:
               memory: "256Mi"

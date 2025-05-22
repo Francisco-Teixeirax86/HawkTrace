@@ -15,12 +15,13 @@ spec:
     spec:
       containers:
         - name: collector
-          image: ghcr.io/Francisco-Teixeirax86/hawktrace-collector:latest
+          image: ghcr.io/francisco-teixeirax86/hawktrace-collector:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8081
           env:
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: "kafka.hawktrace-storage:9092"
+              value: "kafka-service.hawktrace-storage:9092"
             - name: HAWKTRACE_KAFKA_TOPIC_LOGS
               value: "hawktrace.logs"
           resources:
@@ -30,23 +31,17 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-          volumeMounts:
-            - name: log-volume
-              mountPath: /var/log
-              readOnly: true
-      volumes:
-        - name: log-volume
-          hostPath:
-            path: /var/log
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: collector
+  name: collector-service
   namespace: hawktrace-ingestion
 spec:
+  type: NodePort
   selector:
     app: collector
   ports:
     - port: 8081
       targetPort: 8081
+      nodePort: 30081

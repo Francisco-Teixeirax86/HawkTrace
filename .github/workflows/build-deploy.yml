@@ -47,3 +47,11 @@ jobs:
           ghcr.io/${{ steps.lowercase.outputs.owner }}/hawktrace-collector:latest
           ghcr.io/${{ steps.lowercase.outputs.owner }}/hawktrace-collector:${{ github.sha }}
 
+    - name: Make package public
+      if: github.event_name != 'pull_request'
+      run: |
+        curl -X PATCH \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+        https://api.github.com/user/packages/container/hawktrace-collector \
+        -d '{"visibility":"public"}'
