@@ -9,33 +9,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: Build with Maven
-        run: |
-          cd collector/HawkCollector
-          mvn clean package
-
-      - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v4
-        with:
-          context: ./collector/HawkCollector
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/hawktrace:latest
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Build with Maven
+      run: |
+        cd collector/HawkCollector
+        mvn clean package
+        
+    - name: Login to GitHub Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Convert repository owner to lowercase
+      id: lowercase
+      run: echo "owner=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+        
+    - name: Build and push Docker image
+      if: github.event_name != 'pull_request'
+      uses: docker/build-push-action@v4
+      with:
+        context: ./collector/HawkCollector
+        push: true
+        tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/hawktrace-collector:latest
