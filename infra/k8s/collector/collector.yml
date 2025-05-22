@@ -13,6 +13,9 @@ spec:
       labels:
         app: collector
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+
       containers:
         - name: collector
           image: ghcr.io/francisco-teixeirax86/hawktrace-collector:latest
