@@ -38,4 +38,4 @@ jobs:
         with:
           context: ./collector/HawkCollector
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/hawktrace-collector:latest
+          tags: ghcr.io/${{ github.repository_owner }}/HawkTrace:latest
