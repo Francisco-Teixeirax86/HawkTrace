@@ -1,6 +1,8 @@
 package hawkeye.hawktrace.hawkcollector.service;
 
 import hawkeye.hawktrace.hawkcollector.model.LogEvent;
+import hawkeye.hawktrace.hawkcollector.model.ParsedLogEvent;
+import hawkeye.hawktrace.hawkcollector.parser.LogParseFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,15 +26,17 @@ public class FileLogCollectorService {
     private final ExecutorService executorService;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final String hostname;
+    private final LogParseFactory logParseFactory;
 
 
     @Value("${hawktrace.kafka.topic.logs}")
     private String logsTopic;
 
     @Autowired
-    public FileLogCollectorService(KafkaTemplate<String, LogEvent> kafkaTemplate) {
+    public FileLogCollectorService(KafkaTemplate<String, LogEvent> kafkaTemplate, LogParseFactory logParseFactory) {
         this.kafkaTemplate = kafkaTemplate;
         this.executorService = Executors.newSingleThreadExecutor();
+        this.logParseFactory = logParseFactory;
 
         String hostnameTemp;
         //Get HostName for log events
@@ -93,6 +97,14 @@ public class FileLogCollectorService {
 
                                 kafkaTemplate.send(logsTopic, logEvent.getId(), logEvent);
                                 log.debug("Sent log event to kafka: {}", logEvent.getId());
+
+                                //Parse and process with the custom parsers
+                                ParsedLogEvent parsedLogEvent = logParseFactory.parseLogEvent(line);
+                                parsedLogEvent.setSource(logFilePath);
+                                parsedLogEvent.setLogType(logType);
+                                parsedLogEvent.setHostName(hostname);
+
+                                log.debug("Parsed log with parser '{}': {}", parsedLogEvent.getParserType(), parsedLogEvent.getId());
                             }
                         }
 
