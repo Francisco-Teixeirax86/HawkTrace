@@ -15,7 +15,6 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-secret
-
       containers:
         - name: collector
           image: ghcr.io/francisco-teixeirax86/hawktrace-collector:latest
@@ -24,7 +23,7 @@ spec:
             - containerPort: 8081
           env:
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: "kafka-service.hawktrace-storage:9092"
+              value: "kafka-service.hawktrace-storage.svc.cluster.local:9092"
             - name: HAWKTRACE_KAFKA_TOPIC_LOGS
               value: "hawktrace.logs"
           resources:
@@ -34,6 +33,15 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          volumeMounts:
+            - name: windows-logs
+              mountPath: /logs
+              readOnly: false
+      volumes:
+        - name: windows-logs
+          hostPath:
+            path: /run/desktop/mnt/host/c/Users/franj/Desktop/hawktrace-logs
+            type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service
