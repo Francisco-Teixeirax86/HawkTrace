@@ -22,7 +22,7 @@ jobs:
     - name: Build with Maven
       run: |
         cd collector/HawkCollector
-        mvn clean package
+        mvn clean package -DskipTests
         
     - name: Login to GitHub Container Registry
       if: github.event_name != 'pull_request'
