@@ -27,16 +27,19 @@ public class FileLogCollectorService {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final String hostname;
     private final LogParseFactory logParseFactory;
+    private final ElasticsearchService elasticsearchService;
 
 
     @Value("${hawktrace.kafka.topic.logs}")
     private String logsTopic;
 
     @Autowired
-    public FileLogCollectorService(KafkaTemplate<String, LogEvent> kafkaTemplate, LogParseFactory logParseFactory) {
+    public FileLogCollectorService(KafkaTemplate<String, LogEvent> kafkaTemplate, LogParseFactory logParseFactory
+            , ElasticsearchService elasticsearchService) {
         this.kafkaTemplate = kafkaTemplate;
         this.executorService = Executors.newSingleThreadExecutor();
         this.logParseFactory = logParseFactory;
+        this.elasticsearchService = elasticsearchService;
 
         String hostnameTemp;
         //Get HostName for log events
@@ -105,6 +108,13 @@ public class FileLogCollectorService {
                                 parsedLogEvent.setHostName(hostname);
 
                                 log.debug("Parsed log with parser '{}': {}", parsedLogEvent.getParserType(), parsedLogEvent.getId());
+
+                                try {
+                                    elasticsearchService.saveParsedLogEvent(parsedLogEvent);
+                                    log.info("Saved log event to elasticsearch: {}", parsedLogEvent.getId());
+                                } catch (Exception e) {
+                                    log.error("Failed to save log event: {}", e.getMessage());
+                                }
                             }
                         }
 
