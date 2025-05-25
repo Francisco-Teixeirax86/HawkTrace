@@ -96,7 +96,7 @@ public class FileLogCollectorService {
                                         .build();
 
                                 kafkaTemplate.send(logsTopic, logEvent.getId(), logEvent);
-                                log.info("Sent log event to kafka: {}", logEvent.getId());
+                                log.debug("Sent log event to kafka: {}", logEvent.getId());
 
                                 //Parse and process with the custom parsers
                                 ParsedLogEvent parsedLogEvent = logParseFactory.parseLogEvent(line);
@@ -104,7 +104,7 @@ public class FileLogCollectorService {
                                 parsedLogEvent.setLogType(logType);
                                 parsedLogEvent.setHostName(hostname);
 
-                                log.info("Parsed log with parser '{}': {}", parsedLogEvent.getParserType(), parsedLogEvent.getId());
+                                log.debug("Parsed log with parser '{}': {}", parsedLogEvent.getParserType(), parsedLogEvent.getId());
                             }
                         }
 
