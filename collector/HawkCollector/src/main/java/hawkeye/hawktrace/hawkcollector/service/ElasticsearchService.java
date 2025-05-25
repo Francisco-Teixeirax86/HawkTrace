@@ -37,13 +37,15 @@ public class ElasticsearchService {
         return repository.findById(id);
     }
 
-    public List<ParsedLogEvent> findBySourceIP(String sourceIP) {
-        return repository.findBySourceIP(sourceIP);
+    public List<ParsedLogEvent> findBySourceIp(String sourceIp) {
+        return repository.findBySourceIp(sourceIp);
     }
 
     public List<ParsedLogEvent> findBySeverity(String severity) {
         return repository.findBySeverity(severity);
     }
+
+    public List<ParsedLogEvent> findBySourceIpAndSeverity(String sourceIP, String severity) {return repository.findBySourceIpAndSeverity(sourceIP, severity);}
 
     public List<ParsedLogEvent> findByRecentEvents(Instant from, Instant to) {
         return repository.findByTimestampBetween(from, to);

@@ -15,7 +15,7 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "hawtrace-logs")
+@Document(indexName = "hawktrace-logs")
 public class ParsedLogEvent {
     @Id
     private String id;
