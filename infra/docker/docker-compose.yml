@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Infrastructure Services
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     container_name: zookeeper
@@ -13,12 +14,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.3.0
     container_name: kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     ports:
       - "9092:9092"
     environment:
@@ -33,34 +36,44 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+    restart: unless-stopped
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       SERVER_PORT: 8080
-  
+    restart: unless-stopped
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: elasticsearch
     ports:
       - "9200:9200"
+      - "9300:9300"
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
       interval: 30s
       timeout: 10s
       retries: 5
+    restart: unless-stopped
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: kibana
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -68,8 +81,50 @@ services:
       - "5601:5601"
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    restart: unless-stopped
+
+  log-collector:
+    build: 
+      context: ./collector
+    container_name: hawktrace-collector
+    depends_on:
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HAWKTRACE_KAFKA_TOPIC_LOGS: "hawktrace.logs"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    volumes:
+      - /mnt/c/Users/franj/Desktop/hawktrace-logs:/logs
+    restart: unless-stopped
+
+  threat-processor:
+    build:
+      context: ./processor
+    container_name: hawktrace-processor
+    depends_on:
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      HAWKTRACE_KAFKA_TOPIC_LOGS: "hawktrace.logs"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    restart: unless-stopped
 
 volumes:
   esdata:
+    driver: local
   kafka-data:
+    driver: local
   zookeeper-data:
+    driver: local
+
+networks:
+  default:
+    name: hawktrace-network
